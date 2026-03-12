@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="全端星链 - 收录全平台优质影视应用，一站式解决你的观影需求">
+  <meta name="theme-color" content="#fef7f8">
+  <meta name="robots" content="noindex, nofollow, noarchive, noimageindex">
+  <title>全端星链</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<script>
+!function(){
+  // 禁止右键菜单
+  document.addEventListener('contextmenu', function(e){ e.preventDefault() })
+
+  // 禁止常见快捷键：Ctrl+S 保存、Ctrl+U 查看源码、F12 开发者工具
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'F12') { e.preventDefault(); return false }
+    if (e.ctrlKey && (e.key === 'u' || e.key === 'U' || e.key === 's' || e.key === 'S')) {
+      e.preventDefault(); return false
+    }
+    if (e.ctrlKey && e.shiftKey && (e.key === 'i' || e.key === 'I' || e.key === 'j' || e.key === 'J' || e.key === 'c' || e.key === 'C')) {
+      e.preventDefault(); return false
+    }
+  })
+
+  // 检测开发者工具打开
+  var dc = 0
+  setInterval(function(){
+    var t0 = performance.now()
+    debugger
+    if (performance.now() - t0 > 50) {
+      dc++
+      if (dc > 2) document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#9b8a9e;font-size:1.2rem;background:#fef7f8">请关闭开发者工具后刷新页面</div>'
+    } else {
+      dc = 0
+    }
+  }, 2000)
+
+  // 控制台警告
+  console.log('%c⚠ 警告', 'color:red;font-size:2rem;font-weight:bold')
+  console.log('%c本站内容受保护，禁止未经授权的爬取和复制。', 'font-size:1rem;color:#666')
+}()
+</script>
+
+<div id="app">
+
+  <!-- ========== Navbar ========== -->
+  <nav class="navbar" :class="{ scrolled: scrolled }">
+    <div class="container">
+      <div class="nav-brand" @click="goHome" style="cursor:pointer">
+        <img src="logo.png" alt="全端星链" class="nav-logo">
+        <span>全端星链</span>
+      </div>
+      <button class="nav-toggle" :class="{ active: mobileMenu }" @click="toggleMenu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-menu" :class="{ open: mobileMenu }">
+        <li v-for="cat in categories" :key="cat.id">
+          <a :href="'#/' + cat.id" @click="closeMenu">{{ cat.icon }} {{ cat.name }}</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ===================== HOME PAGE ===================== -->
+  <template v-if="currentPage === 'home'">
+
+    <header class="hero">
+      <div class="hero-bg">
+        <div class="hero-stars"></div>
+        <div class="hero-stars-2"></div>
+      </div>
+      <div class="hero-content">
+        <p class="hero-badge">✦ 全平台应用导航</p>
+        <h1 class="hero-title">全端星链</h1>
+        <h2 class="hero-subtitle">影视 · 音乐 · 应用</h2>
+        <p class="hero-desc">收录全平台优质应用，影视、音乐、口令一站式导航</p>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <span class="hero-stat-num">{{ totalApps }}</span>
+            <span class="hero-stat-label">收录应用</span>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div class="hero-stat">
+            <span class="hero-stat-num">{{ categories.length }}</span>
+            <span class="hero-stat-label">大分类</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="home-categories">
+      <div class="container">
+        <h2 class="section-heading">选择分类</h2>
+        <div class="category-grid">
+          <a
+            v-for="cat in categories"
+            :key="cat.id"
+            :href="'#/' + cat.id"
+            class="category-card"
+            :style="{ '--cat-color': cat.color }"
+          >
+            <div class="category-card-icon">{{ cat.icon }}</div>
+            <div class="category-card-info">
+              <h3>{{ cat.name }}</h3>
+              <p>{{ cat.description }}</p>
+            </div>
+            <div class="category-card-meta">
+              <span class="category-card-count">{{ cat.apps.length }} 个应用</span>
+              <span class="category-card-arrow">→</span>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </template>
+
+  <!-- ===================== CATEGORY PAGE ===================== -->
+  <template v-if="currentCategory">
+
+    <div class="page-header" :style="{ '--cat-color': currentCategory.color }">
+      <div class="container">
+        <a href="#/" class="back-link">← 返回首页</a>
+        <div class="page-header-body">
+          <div class="page-header-icon">{{ currentCategory.icon }}</div>
+          <div>
+            <h1 class="page-header-title">{{ currentCategory.name }}</h1>
+            <p class="page-header-desc">{{ currentCategory.description }} · {{ currentCategory.apps.length }} 个应用</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="page-apps">
+      <div class="container">
+
+        <template v-if="appGroups">
+          <div class="group-nav-bar">
+            <button
+              v-for="group in appGroups"
+              :key="'nav-' + group.id"
+              class="group-nav-item"
+              @click="scrollToGroup(group.id)"
+            >{{ group.name }}<span class="group-nav-count">{{ group.apps.length }}</span></button>
+          </div>
+          <div v-for="group in appGroups" :key="group.id" :id="group.id" class="app-group">
+            <h3 class="app-group-title">{{ group.name }}</h3>
+            <div class="apps-grid">
+              <div
+                v-for="(app, idx) in group.apps"
+                :key="idx"
+                class="app-card"
+                :style="{ '--card-accent': currentCategory.color }"
+              >
+                <div class="app-card-main">
+                  <div class="app-card-icon">{{ app.icon }}</div>
+                  <div class="app-card-info">
+                    <h3 class="app-card-name">
+                      {{ app.name }}
+                      <span v-if="app.rating" class="app-card-stars">
+                        <span v-for="s in 5" :key="s" :class="s <= app.rating ? 'star-on' : 'star-off'">★</span>
+                      </span>
+                    </h3>
+                    <p v-if="app.description" class="app-card-desc">{{ app.description }}</p>
+                    <div v-if="app.tags && !app._group" class="app-card-tags">
+                      <span v-for="tag in app.tags" :key="tag" class="app-card-tag">{{ tag }}</span>
+                    </div>
+                    <div v-if="app.tags && app._group" class="app-card-tags">
+                      <span v-for="tag in app.tags" :key="tag" class="app-card-tag">{{ tag }}</span>
+                      <span v-if="app.ipad" class="app-card-tag app-card-tag--ipad">iPad: {{ app.ipad }}</span>
+                    </div>
+                  </div>
+                  <a v-if="app.url && app.url !== '#'" :href="app.url" target="_blank" rel="noopener noreferrer" class="app-card-link" @click.stop>获取</a>
+                </div>
+                <div v-if="app.tip" class="app-card-tip">
+                  <span class="app-card-tip-label">变身方法</span>
+                  <span class="app-card-tip-text">{{ app.tip }}</span>
+                  <div v-if="app.code" class="app-card-code-wrap">
+                    <span style="font-size:0.72rem;color:#9b8a9e">暗号 / 代码：</span>
+                    <button class="app-card-copy" @click="copyCode(app.code, $event)">一键复制</button>
+                    <code class="app-card-code">{{ app.code }}</code>
+                  </div>
+                </div>
+                <div v-if="!app.tip && app.code" class="app-card-tip">
+                  <span class="app-card-tip-label">口令</span>
+                  <div class="app-card-code-wrap">
+                    <button class="app-card-copy" @click="copyCode(app.code, $event)">一键复制</button>
+                    <code class="app-card-code">{{ app.code }}</code>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <template v-else>
+          <div v-if="!currentCategory.apps.length" class="empty-state">
+            <span class="empty-state-icon">📭</span>
+            <p>暂无应用，敬请期待 ~</p>
+          </div>
+          <div v-else class="apps-grid">
+            <div
+              v-for="(app, idx) in currentCategory.apps"
+              :key="idx"
+              class="app-card"
+              :style="{ '--card-accent': currentCategory.color }"
+            >
+              <div class="app-card-main">
+                <div class="app-card-icon">{{ app.icon }}</div>
+                <div class="app-card-info">
+                  <h3 class="app-card-name">
+                    {{ app.name }}
+                    <span v-if="app.rating" class="app-card-stars">
+                      <span v-for="s in 5" :key="s" :class="s <= app.rating ? 'star-on' : 'star-off'">★</span>
+                    </span>
+                  </h3>
+                  <p class="app-card-desc">{{ app.description }}</p>
+                  <div class="app-card-tags">
+                    <span v-for="tag in app.tags" :key="tag" class="app-card-tag">{{ tag }}</span>
+                    <span v-if="app.ipad" class="app-card-tag app-card-tag--ipad">iPad: {{ app.ipad }}</span>
+                  </div>
+                </div>
+                <a v-if="app.url && app.url !== '#'" :href="app.url" target="_blank" rel="noopener noreferrer" class="app-card-link" @click.stop>获取</a>
+              </div>
+              <div v-if="app.tip" class="app-card-tip">
+                <span class="app-card-tip-label">变身方法</span>
+                <span class="app-card-tip-text">{{ app.tip }}</span>
+                <div v-if="app.code" class="app-card-code-wrap">
+                  <span style="font-size:0.72rem;color:#9b8a9e">暗号 / 代码：</span>
+                  <button class="app-card-copy" @click="copyCode(app.code, $event)">一键复制</button>
+                  <code class="app-card-code">{{ app.code }}</code>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+
+      </div>
+    </section>
+
+    <!-- ========== Comment Section ========== -->
+    <section class="comment-section">
+      <div class="container">
+        <h2 class="section-heading">💬 评论区</h2>
+
+        <div class="comment-form-card">
+          <form @submit.prevent="submitComment">
+            <div class="comment-form-row">
+              <div class="form-field">
+                <input v-model="commentForm.nickname" type="text" placeholder="昵称 *" required>
+              </div>
+              <div class="form-field">
+                <input v-model="commentForm.email" type="email" placeholder="邮箱 *（不公开）" required>
+              </div>
+            </div>
+            <div class="form-field">
+              <textarea v-model="commentForm.content" placeholder="写下你的评论..." rows="3" required></textarea>
+            </div>
+            <div class="comment-form-actions">
+              <transition name="fade">
+                <span v-if="commentStatus === 'success'" class="comment-toast comment-toast--success">✓ 评论成功</span>
+              </transition>
+              <transition name="fade">
+                <span v-if="commentStatus === 'error'" class="comment-toast comment-toast--error">✕ 发送失败，请重试</span>
+              </transition>
+              <button type="submit" class="btn-submit" :disabled="commentSubmitting">
+                {{ commentSubmitting ? '发送中...' : '发表评论' }}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div v-if="commentsLoading" class="comments-status">
+          <div class="loading-dots"><span></span><span></span><span></span></div>
+          <p>加载评论中...</p>
+        </div>
+
+        <div v-else-if="comments.length === 0 && sb.url !== 'YOUR_SUPABASE_URL'" class="comments-status">
+          <p class="comments-empty-text">暂无评论，来说两句吧 ✨</p>
+        </div>
+
+        <div v-else-if="sb.url === 'YOUR_SUPABASE_URL'" class="comments-status">
+          <p class="comments-empty-text">评论系统待配置，请参阅 data.js</p>
+        </div>
+
+        <div v-else class="comments-list">
+          <div v-for="c in comments" :key="c.id" class="comment-item">
+            <div class="comment-avatar" :style="{ background: getAvatarColor(c.nickname) }">
+              {{ (c.nickname || '?').charAt(0).toUpperCase() }}
+            </div>
+            <div class="comment-body">
+              <div class="comment-meta">
+                <span class="comment-author">{{ c.nickname }}</span>
+                <span class="comment-time">{{ formatTime(c.created_at) }}</span>
+              </div>
+              <p class="comment-text">{{ c.content }}</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </template>
+
+  <!-- ========== Footer ========== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-brand">
+        <img src="logo.png" alt="全端星链" class="footer-logo">
+        <span>全端星链</span>
+      </div>
+      <p class="footer-text">收录应用仅供学习交流使用，请支持正版</p>
+      <div class="footer-divider"></div>
+      <p class="footer-copy">&copy; {{ currentYear }} 全端星链. All rights reserved.</p>
+    </div>
+  </footer>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.min.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
